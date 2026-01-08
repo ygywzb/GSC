@@ -134,6 +134,15 @@
     }
 
 
+    function clickDownloadButton(element) {
+        debugger;;
+        assert(element, "无法获取谱面集元素");
+        const btn = element.querySelector("a.beatmapset-panel__menu-item");
+        assert(btn, "无法获取谱面集下载按钮");
+        btn.click();
+    }
+
+
     /**
      * 获取当前所有的谱面块。
      * @returns {HTMLDivElement[]} 当前所有的谱面集列表
@@ -277,6 +286,14 @@
                 if (e.key === 'ArrowLeft') { goToNextBeatMapSetItem("left") }
                 if (e.key === 'ArrowRight') { goToNextBeatMapSetItem("right") }
                 if (e.key === 'Enter') { clickPlayButton(getBeatmapSetsItemsCache()[getCurrentIdx()]) }
+
+                setTimeout(() => cooling = false, 500);
+            }
+            if (e.altKey && bindedKeys.includes(e.key)) {
+                if (cooling) return;
+                cooling = true;
+
+                if (e.key === 'Enter') { clickDownloadButton(getBeatmapSetsItemsCache()[getCurrentIdx()]) }
 
                 setTimeout(() => cooling = false, 500);
             }
