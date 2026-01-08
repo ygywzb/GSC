@@ -16,8 +16,8 @@
     // Your code here...
     /**
      * 简单的断言，断言失败会抛出异常
-     * @param {boolean} condition 
-     * @param {string} message 
+     * @param {boolean} condition
+     * @param {string} message
      * @param {boolean} alertFlag 若为true，会弹出提示框
      */
     function assert(condition, message = "Assertion failed", alertFlag = false) {
@@ -31,7 +31,7 @@
 
     /**
      * 添加选中框
-     * @param {HTMLDivElement} element 
+     * @param {HTMLDivElement} element
      */
     function addSelectionBox(element) {
         element.style.border = '5px solid lightgreen';
@@ -40,7 +40,7 @@
 
     /**
      * 移除选中框
-     * @param {HTMLDivElement} element 
+     * @param {HTMLDivElement} element
      */
     function removeSelectionBox(element) {
         element.style.border = '';
@@ -50,7 +50,7 @@
 
     /**
      * 将一个元素（尽量）滚动到视野中间
-     * @param {HTMLDivElement} element 
+     * @param {HTMLDivElement} element
      */
     function scrollIntoCenterView(element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
@@ -69,7 +69,7 @@
 
     /**
      * 设置缓存的谱面集列表
-     * @param {HTMLDivElement[]} current 需设置的谱面集列表 
+     * @param {HTMLDivElement[]} current 需设置的谱面集列表
      * @returns {HTMLDivElement[]} 设置好的缓存的谱面集列表
      */
     function setBeatmapSetsItemsCache(current) {
@@ -79,7 +79,7 @@
 
     /**
      * 获取当前的角标
-     * @return {number} 当前的角标 
+     * @return {number} 当前的角标
      */
     function getCurrentIdx() {
         return currentIdx;
@@ -111,7 +111,7 @@
 
     /**
      * 获取谱面集元素的具体信息
-     * @param {HTMLDivElement} element 
+     * @param {HTMLDivElement} element
      * @returns {*} 一个信息对象
      */
     function getBeatMapSetInfo(element) {
@@ -161,9 +161,9 @@
 
     /**
      * 新获取列表时，获取旧的元素在新列表中的位置
-     * @param {HTMLDivElement[]} oldList 
-     * @param {HTMLDivElement[]} newList 
-     * @param {number} oldIdx 
+     * @param {HTMLDivElement[]} oldList
+     * @param {HTMLDivElement[]} newList
+     * @param {number} oldIdx
      * @returns {number}
      */
     function findNewCurrentIdx(oldList, newList, oldIdx) {
@@ -175,9 +175,9 @@
 
     /**
      * 根据当前列表的当前元素位置，计算出下一次移动的idx。
-     * @param {number} nowIdx 
-     * @param {number} row 
-     * @param {string} movingTo 移动方向，上(up)下(down)左(left)右(right) 
+     * @param {number} nowIdx
+     * @param {number} row
+     * @param {string} movingTo 移动方向，上(up)下(down)左(left)右(right)
      * @returns {number} 移动后对应的idx，有可能会越界。
      */
     function getNextIdx(nowIdx, row, movingTo) {
@@ -200,15 +200,18 @@
     /**
      * 找到下一个谱面集，第一次会返回当前的第一个块。
      * 下一个谱面集会被标记。
-     * @param {string} movingTo 移动方向，上(up)下(down)左(left)右(right) 
+     * @param {string} movingTo 移动方向，上(up)下(down)左(left)右(right)
      * @returns {HTMLDivElement} 下一个谱面集
      */
     function goToNextBeatMapSetItem(movingTo) {
+        debugger;;
         const fixedRow = 2; // 先写上
 
         let current = getBeatmapSetsItemsCache()
+        const fetched = fetchCurrentBeatmapSetsItems();
+
+        //
         if (!current) {
-            const fetched = fetchCurrentBeatmapSetsItems();
             current = setBeatmapSetsItemsCache(fetched);
         }
 
@@ -224,27 +227,28 @@
             return selected;
         }
 
+        // 确保即使列表更新，但当前谱面集仍然存在
+        // 若不存在，找当前列表中间的一个代替
+        currentIdx = findNewCurrentIdx(current, fetched, currentIdx);
+        current = fetched;
+        if (currentIdx === -1) {
+            currentIdx = Math.floor(fetched.length / 2) - 1;
+        }
+
+        // 计算下一个
         let nextIdx = getNextIdx(currentIdx, fixedRow, movingTo);
 
-        // 下一个idx越界（太大/太小），尝试更新列表
+        // 角标越界（太大/太小），尝试更新列表
+        // 感觉几率很小
         if (nextIdx >= current.length || nextIdx < 0) {
             const fetched = fetchCurrentBeatmapSetsItems();
-            // ---------------------------DEBUG--------------------------
-            // const fetchedInfoList = fetched.map(v => getBeatMapSetInfo(v));
-            // const currentInfoList = current.map(v => getBeatMapSetInfo(v));
-
-            // console.debug("fetched(new):", fetchedInfoList);
-            // console.debug("current(old):", currentInfoList);
-            // debugger;;
-            // ---------------------------DEBUG--------------------------
-            // 开头变动，列表向下滑动
             currentIdx = findNewCurrentIdx(current, fetched, currentIdx);
             // 重新尝试获取下一个idx，此时应该不会越界
             nextIdx = getNextIdx(currentIdx, fixedRow, movingTo);
-
             assert(nextIdx < fetched.length && nextIdx >= 0, "似乎已经走到头了", true);
             current = setBeatmapSetsItemsCache(fetched);
         }
+        current = setBeatmapSetsItemsCache(current);
 
         // 找到下一个谱面集
         removeSelectionBox(current[currentIdx]);
@@ -282,7 +286,7 @@
     /**
      * 绑定一个观察器，用于监听网址变化，在网址改变时执行一个函数，
      * 单页应用改变网址不会重新加载脚本资源。
-     * @param {Function} fallback 
+     * @param {Function} fallback
      */
     function bindUrlChangeObserver(fallback) {
         let oldUrl = location.href;
